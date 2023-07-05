@@ -43,7 +43,7 @@ This react-native app was built with these Api and Libraries:
 
 ## Usage
 
-After downloading and launching the app, You will see only one screen. Prees on the search button. We'll randomly select a destination for you. Click on the marker that pops up on the map to discover more about the place. Want to explore another spot? Click the search button again.
+After downloading and launching the app, You will see only one screen. Press on the search button. We'll randomly select a destination for you. Click on the marker that pops up on the map to discover more about the place. Want to explore another spot? Click the search button again.
 
 
 
