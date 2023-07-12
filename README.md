@@ -53,7 +53,9 @@ After downloading and launching the app, You will see only one screen. Press on 
 
 ## Contact
 
-Ohad Nave - [My linkedin](https://www.linkedin.com/in/ohadnave/) - ohadnave@gmail.com
+Ohad Nave:
+[Linkedin](https://www.linkedin.com/in/ohadnave/)
+email: ohadnave@gmail.com
 
 
 
