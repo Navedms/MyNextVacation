@@ -53,7 +53,7 @@ After downloading and launching the app, You will see only one screen. Press on 
 
 ## Contact
 
-If you have any questions about this aplication, You can contact me:
+If you have any questions about this application, You can contact me:
 
 Ohad Nave - [Linkedin](https://www.linkedin.com/in/ohadnave/)
 
