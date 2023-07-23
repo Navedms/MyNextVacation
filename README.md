@@ -42,7 +42,9 @@ This react-native app was built with these Api and Libraries:
 
 
 ## Download
+
 App Store (iOS): https://apps.apple.com/app/my-next-vacation/id6450987187
+
 Google Play (Android): https://play.google.com/store/apps/details?id=com.appn.mynextvacation
 
 
