@@ -1,4 +1,4 @@
-package com.mynextvacation.newarchitecture;
+package com.appn.mynextvacation.newarchitecture;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -19,9 +19,9 @@ import com.facebook.react.fabric.CoreComponentsRegistry;
 import com.facebook.react.fabric.FabricJSIModuleProvider;
 import com.facebook.react.fabric.ReactNativeConfig;
 import com.facebook.react.uimanager.ViewManagerRegistry;
-import com.mynextvacation.BuildConfig;
-import com.mynextvacation.newarchitecture.components.MainComponentsRegistry;
-import com.mynextvacation.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
+import com.appn.mynextvacation.BuildConfig;
+import com.appn.mynextvacation.newarchitecture.components.MainComponentsRegistry;
+import com.appn.mynextvacation.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
 import java.util.ArrayList;
 import java.util.List;
 

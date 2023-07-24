@@ -1,4 +1,4 @@
-package com.mynextvacation.newarchitecture.components;
+package com.appn.mynextvacation.newarchitecture.components;
 
 import com.facebook.jni.HybridData;
 import com.facebook.proguard.annotations.DoNotStrip;

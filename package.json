@@ -1,6 +1,6 @@
 {
   "name": "mynextvacation",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -12,6 +12,7 @@
   "dependencies": {
     "apisauce": "^3.0.1",
     "lottie-react-native": "^5.1.6",
+    "pods": "^2.0.0",
     "react": "18.1.0",
     "react-native": "0.70.10",
     "react-native-geolocation-service": "^5.3.1",

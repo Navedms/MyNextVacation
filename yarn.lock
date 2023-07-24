@@ -5884,6 +5884,11 @@
   dependencies:
     "find-up" "^4.0.0"
 
+"pods@^2.0.0":
+  "integrity" "sha512-whEUYBUxuc2Sbi2g6zQj5l6IAi4iyU4cF/p1IV2JxdumDlzEFdLX4AJQFrOc7Tl78VwcXAR0NzmgvBiEZFul8w=="
+  "resolved" "https://registry.npmjs.org/pods/-/pods-2.0.0.tgz"
+  "version" "2.0.0"
+
 "posix-character-classes@^0.1.0":
   "integrity" "sha512-xTgYBc3fuo7Yt7JbiuFxSYGToMoz8fLoE6TC9Wx1P/u+LfeThMOAqmuyECnlBaaJb+u1m9hHiXUEtwW4OzfUJg=="
   "resolved" "https://registry.npmjs.org/posix-character-classes/-/posix-character-classes-0.1.1.tgz"

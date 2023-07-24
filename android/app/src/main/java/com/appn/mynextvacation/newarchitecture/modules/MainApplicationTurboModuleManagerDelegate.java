@@ -1,4 +1,4 @@
-package com.mynextvacation.newarchitecture.modules;
+package com.appn.mynextvacation.newarchitecture.modules;
 
 import com.facebook.jni.HybridData;
 import com.facebook.react.ReactPackage;
