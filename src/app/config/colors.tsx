@@ -4,7 +4,7 @@ export interface Colors {
 
 const colors: Colors = {
   black: '#000',
-  opacityBlack: 'rgba(0, 0, 0, 0.7)',
+  opacityBlack: 'rgba(0, 0, 0, 0.5)',
   white: '#fff',
   primary: '#3366ff',
   secondary: '#0CD3B5',

@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   closeTitleBtn: {
     top: Platform.OS === 'android' ? 35 : 40,
-    left: Platform.OS === 'android' ? -4 : 6,
+    left: 6,
   },
   children: {
     flex: 1,

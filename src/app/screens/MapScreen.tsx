@@ -8,8 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AppLink from 'react-native-app-link';
+import {decode} from 'base-64';
+import ViewShot from 'react-native-view-shot';
 import Geolocation from 'react-native-geolocation-service';
+import Share from 'react-native-share';
+var RNFS = require('react-native-fs');
 
+import settings from '../../../package.json';
 import Activityindicator from '../components/Activityindicator';
 import Text from '../components/Text';
 import Icon from '../components/Icon';
@@ -18,6 +24,7 @@ import colors from '../config/colors';
 import countriesApi from '../api/countries';
 import {ApiResponse} from 'apisauce';
 import Modal from '../components/AppModal';
+import Button from '../components/Button';
 
 interface InitialRegion {
   latitude: number;
@@ -30,21 +37,20 @@ const MapScreen = () => {
   const [initialRegion, setInitialRegion] = useState<InitialRegion | null>(
     null,
   );
+  const [myLocation, setMyLocation] = useState<InitialRegion | null>(null);
+  const [isNewVersion, setIsNewVersion] = useState<string | null>(null);
   const [pressFirstLocation, setPressFirstLocation] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [open, setOpen] = useState<boolean>(false);
+  const [openVersion, setOpenVersion] = useState<boolean>(false);
   const [rendomData, setRendomData] = useState<any>({});
   const [allData, setAllData] = useState<any>(null);
   const mapRef = useRef<any>(null);
+  const viewShotref = useRef<any>(null);
 
   const goToNextLocation = async () => {
-    setLoading(true);
-    const result: ApiResponse<any> = allData
-      ? allData
-      : await countriesApi.get();
-    setAllData(result);
-    const placeNumber = Math.floor(Math.random() * result.data.length);
-    const tempRandon = result.data[placeNumber];
+    const placeNumber = Math.floor(Math.random() * allData.length);
+    const tempRandon = allData[placeNumber];
     setRendomData(tempRandon);
 
     const tempInitialRegion = {
@@ -56,7 +62,16 @@ const MapScreen = () => {
     setInitialRegion(tempInitialRegion);
     mapRef.current.animateToRegion(tempInitialRegion, 4000);
     setPressFirstLocation(true);
-    setLoading(false);
+  };
+
+  const goBackToMyLocation = () => {
+    mapRef.current.animateToRegion(myLocation, 4000);
+    setPressFirstLocation(false);
+  };
+
+  const setAllLocations = async () => {
+    const result: ApiResponse<any> = await countriesApi.get();
+    setAllData(result.data);
   };
 
   const requestLocationPermission = async () => {
@@ -90,7 +105,6 @@ const MapScreen = () => {
   };
 
   const getLocation = () => {
-    setLoading(true);
     const result = requestLocationPermission();
 
     result.then(res => {
@@ -98,6 +112,12 @@ const MapScreen = () => {
         Geolocation.getCurrentPosition(
           position => {
             setInitialRegion({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              latitudeDelta: 3,
+              longitudeDelta: 3,
+            });
+            setMyLocation({
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
               latitudeDelta: 3,
@@ -115,57 +135,186 @@ const MapScreen = () => {
           },
         );
       }
-      setLoading(false);
     });
   };
 
+  const captureAndShareScreenshot = async () => {
+    const takePhoto = await viewShotref.current.capture();
+
+    RNFS.readFile(takePhoto, 'base64').then(async res => {
+      let urlString = 'data:image/jpeg;base64,' + res;
+      const options = {
+        title: `Wow! Look where I'm going on vacation next time: ${rendomData?.name?.common}!`,
+        message: `Want to find out where your next vacation is gonna be too? just Download the app: AppStore: https://did.li/QNFCN | GooglePlay: https://did.li/3fjIw`,
+        url: urlString,
+        type: 'image/jpeg',
+      };
+
+      try {
+        await Share.open(options);
+      } catch (error: any) {}
+    });
+  };
+
+  const checkVersionUpdate = async () => {
+    const newVersion = await fetchPackageJsonContentVersion();
+    if (
+      Number(settings.version.split('.').join('')) <
+      Number(newVersion.split('.').join(''))
+    ) {
+      setIsNewVersion(newVersion);
+      setOpenVersion(true);
+    } else {
+      setIsNewVersion(null);
+    }
+  };
+
+  const fetchPackageJsonContentVersion = async () => {
+    try {
+      const response = await fetch(
+        'https://api.github.com/repos/Navedms/MyNextVacation/contents/package.json',
+      );
+      const data = await response.json();
+
+      if (response.ok && data && data.content) {
+        const decodedContent = decode(data.content);
+        const parsedContent = JSON.parse(decodedContent);
+        return parsedContent.version;
+      } else {
+        console.error('Failed to fetch package.json content');
+      }
+    } catch (error) {
+      console.error('Error while fetching package.json content:', error);
+    }
+  };
+
+  const gotoStore = () => {
+    AppLink.openInStore({
+      appName: 'My Next Vacation',
+      appStoreId: Number('6450987187'),
+      playStoreId: 'com.appn.mynextvacation',
+      appStoreLocale: '',
+    })
+      .then(() => {})
+      .catch(err => {});
+  };
+
   useEffect(() => {
+    checkVersionUpdate();
+    setAllLocations();
     getLocation();
   }, []);
 
   return (
-    <View style={styles.container}>
+    <ViewShot
+      style={styles.container}
+      ref={viewShotref}
+      options={{format: 'jpg', quality: 0.9}}>
       <Activityindicator visible={loading} />
       {initialRegion && (
         <MapView
           removeClippedSubviews={true}
           ref={mapRef}
           style={styles.map}
-          initialRegion={initialRegion}>
-          <Marker
-            coordinate={{
-              latitude: initialRegion.latitude,
-              longitude: initialRegion.longitude,
-            }}
-            tappable={true}
-            style={Platform.OS === 'android' && styles.marker}
-            key={`marker-id-${rendomData?.name?.common}`}
-            onPress={() =>
-              Object.keys(rendomData).length > 0 ? setOpen(true) : undefined
-            }>
-            <View style={styles.markerTitle}>
-              <Text style={styles.markerText}>
-                {rendomData?.name?.common || 'My location'}
-              </Text>
-            </View>
-            <Icon name="map-marker" size={50} iconColor={colors.marker} />
-          </Marker>
+          initialRegion={initialRegion}
+          onRegionChange={() => setLoading(true)}
+          onMapReady={() => setLoading(false)}
+          onRegionChangeComplete={() => setLoading(false)}>
+          {pressFirstLocation &&
+            allData?.map((item: any) => (
+              <Marker
+                coordinate={{
+                  latitude: item.latlng[0],
+                  longitude: item.latlng[1],
+                }}
+                tappable={true}
+                style={Platform.OS === 'android' && styles.marker}
+                key={`marker-id-${item?.name?.common}`}
+                onPress={() => {
+                  Object.keys(item).length > 0 ? setOpen(true) : undefined;
+                  setRendomData(item);
+                  const newInitialRegion = {
+                    latitude: item.latlng[0],
+                    longitude: item.latlng[1],
+                    latitudeDelta: 3,
+                    longitudeDelta: 3,
+                  };
+                  setInitialRegion(newInitialRegion);
+                  mapRef.current.animateToRegion(newInitialRegion, 500);
+                }}>
+                <View style={[styles.markerTitle]}>
+                  <Text
+                    style={[
+                      styles.markerText,
+                      item?.name?.official === rendomData.name.official && {
+                        backgroundColor: colors.opacityMarker,
+                      },
+                    ]}>
+                    {item?.name?.common}
+                  </Text>
+                </View>
+                <Icon
+                  name="map-marker"
+                  size={50}
+                  iconColor={
+                    item?.name?.official === rendomData.name.official
+                      ? colors.marker
+                      : colors.darkMedium
+                  }
+                />
+              </Marker>
+            ))}
+          {myLocation && !pressFirstLocation && (
+            <Marker
+              coordinate={{
+                latitude: myLocation.latitude,
+                longitude: myLocation.longitude,
+              }}
+              tappable={false}
+              style={Platform.OS === 'android' && styles.marker}
+              key={`marker-id-myLocation`}>
+              <View style={styles.markerTitle}>
+                <Text style={styles.markerRendomText}>{'My location'}</Text>
+              </View>
+              <Icon name="map-marker" size={50} iconColor={colors.marker} />
+            </Marker>
+          )}
         </MapView>
       )}
       <View style={styles.randomContainer}>
         <Text style={styles.title}>Where Should You Go On Vacation Next?</Text>
-        <TouchableOpacity
-          disabled={loading}
-          onPress={goToNextLocation}
-          style={[
-            styles.btn,
-            loading && styles.disabled,
-            pressFirstLocation && styles.pressFirstLocation,
-          ]}>
-          <Text style={styles.btnText}>
-            {pressFirstLocation ? `Let's try again...` : `Let's find out!`}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.containerBtns}>
+          <TouchableOpacity
+            style={styles.myLocation}
+            onPress={goBackToMyLocation}>
+            <Icon
+              name="my-location"
+              type="MaterialIcons"
+              size={20}
+              iconColor={colors.dark}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            disabled={loading}
+            onPress={goToNextLocation}
+            style={[
+              styles.btn,
+              loading && styles.disabled,
+              pressFirstLocation && styles.pressFirstLocation,
+            ]}>
+            <Text style={styles.btnText}>
+              {pressFirstLocation ? `Let's try again...` : `Let's find out!`}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.share, !pressFirstLocation && {opacity: 0.5}]}
+            activeOpacity={0.5}
+            onPress={
+              pressFirstLocation ? captureAndShareScreenshot : undefined
+            }>
+            <Icon name="share" size={20} iconColor={colors.white} />
+          </TouchableOpacity>
+        </View>
       </View>
       <Modal
         visible={open}
@@ -233,7 +382,19 @@ const MapScreen = () => {
           </View>
         </ScrollView>
       </Modal>
-    </View>
+      <Modal
+        visible={openVersion}
+        setVisible={setOpenVersion}
+        closeBtnText={'Close'}
+        closeBtnbackgroundColor={'dark'}
+        style={{height: Platform.OS === 'android' ? '35%' : '30%'}}>
+        <View style={styles.container}>
+          <Text style={styles.versionTitle}>A new version is out:</Text>
+          <Text style={styles.versionTitle}>{`version ${isNewVersion}`}</Text>
+          <Button onPress={gotoStore} title="Download" />
+        </View>
+      </Modal>
+    </ViewShot>
   );
 };
 
@@ -253,11 +414,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.opacityBlack,
     position: 'absolute',
     zIndex: 1,
-    bottom: 20,
-    left: '5%',
-    width: '90%',
-    borderRadius: 10,
+    bottom: 0,
+    left: 0,
+    width: '100%',
     padding: 15,
+    paddingBottom: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -265,9 +426,15 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
   },
-  btn: {
-    marginTop: 12,
+  containerBtns: {
+    marginTop: 20,
     marginBottom: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  btn: {
     paddingVertical: 10,
     paddingHorizontal: 20,
     backgroundColor: colors.primary,
@@ -304,8 +471,36 @@ const styles = StyleSheet.create({
   markerText: {
     textAlign: 'center',
     color: colors.white,
+    backgroundColor: colors.opacityBlack,
+    paddingHorizontal: 6,
+  },
+  markerRendomText: {
+    textAlign: 'center',
+    color: colors.white,
     backgroundColor: colors.opacityMarker,
     paddingHorizontal: 6,
+  },
+  myLocation: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.darkMedium,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    zIndex: 5,
+  },
+  share: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    zIndex: 5,
   },
   modal: {
     justifyContent: 'flex-start',
@@ -331,5 +526,10 @@ const styles = StyleSheet.create({
   },
   modalValue: {
     color: colors.dark,
+  },
+  versionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.black,
   },
 });
