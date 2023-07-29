@@ -92,6 +92,7 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   closeTitleBtn: {
+    width: 30,
     top: Platform.OS === 'android' ? 35 : 40,
     left: 6,
   },

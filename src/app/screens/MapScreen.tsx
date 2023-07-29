@@ -8,8 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import AppLink from 'react-native-app-link';
-import {decode} from 'base-64';
 import ViewShot from 'react-native-view-shot';
 import Geolocation from 'react-native-geolocation-service';
 import Share from 'react-native-share';
@@ -25,6 +23,7 @@ import countriesApi from '../api/countries';
 import {ApiResponse} from 'apisauce';
 import Modal from '../components/AppModal';
 import Button from '../components/Button';
+import {fetchPackageJsonContentVersion, gotoStore} from '../api/updateApp';
 
 interface InitialRegion {
   latitude: number;
@@ -40,18 +39,28 @@ const MapScreen = () => {
   const [myLocation, setMyLocation] = useState<InitialRegion | null>(null);
   const [isNewVersion, setIsNewVersion] = useState<string | null>(null);
   const [pressFirstLocation, setPressFirstLocation] = useState<boolean>(false);
+  const [nowRenderMarkers, setNowRenderMarkers] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [open, setOpen] = useState<boolean>(false);
   const [openVersion, setOpenVersion] = useState<boolean>(false);
   const [rendomData, setRendomData] = useState<any>({});
   const [allData, setAllData] = useState<any>(null);
+  const [selectData, setSelectData] = useState<any>([]);
   const mapRef = useRef<any>(null);
   const viewShotref = useRef<any>(null);
 
   const goToNextLocation = async () => {
+    setNowRenderMarkers(false);
     const placeNumber = Math.floor(Math.random() * allData.length);
     const tempRandon = allData[placeNumber];
+    const tempSelectData = [];
+    for (let i = -3; i < 4; i++) {
+      tempSelectData.push(
+        allData[(allData.length + placeNumber - i) % allData.length],
+      );
+    }
     setRendomData(tempRandon);
+    setSelectData(tempSelectData);
 
     const tempInitialRegion = {
       latitude: tempRandon.latlng[0],
@@ -61,7 +70,10 @@ const MapScreen = () => {
     };
     setInitialRegion(tempInitialRegion);
     mapRef.current.animateToRegion(tempInitialRegion, 4000);
-    setPressFirstLocation(true);
+    !pressFirstLocation && setPressFirstLocation(true);
+    setTimeout(() => {
+      setNowRenderMarkers(true);
+    }, 4000);
   };
 
   const goBackToMyLocation = () => {
@@ -71,7 +83,36 @@ const MapScreen = () => {
 
   const setAllLocations = async () => {
     const result: ApiResponse<any> = await countriesApi.get();
-    setAllData(result.data);
+    setAllData(sortLocationsByDistance(result.data));
+  };
+
+  const haversine = (x1, y1, x2, y2) => {
+    let y = x2 - x1;
+    let x = y2 - y1;
+
+    return Math.sqrt(x * x + y * y);
+  };
+
+  const sortLocationsByDistance = locations => {
+    const sortedLocations = [...locations].sort((a, b) => {
+      const latDiff = a.latlng[0] - b.latlng[0];
+      if (latDiff !== 0) {
+        return latDiff;
+      }
+      return a.latlng[1] - b.latlng[1];
+    });
+
+    sortedLocations.forEach((loc, i) => {
+      if (i < sortedLocations.length - 1) {
+        const {latitude: lat1, longitude: lon1} = loc;
+        const {latitude: lat2, longitude: lon2} = sortedLocations[i + 1];
+        loc.distanceToNext = haversine(lat1, lon1, lat2, lon2);
+      } else {
+        loc.distanceToNext = null;
+      }
+    });
+
+    return sortedLocations;
   };
 
   const requestLocationPermission = async () => {
@@ -144,8 +185,8 @@ const MapScreen = () => {
     RNFS.readFile(takePhoto, 'base64').then(async res => {
       let urlString = 'data:image/jpeg;base64,' + res;
       const options = {
-        title: `Wow! Look where I'm going on vacation next time: ${rendomData?.name?.common}!`,
-        message: `Want to find out where your next vacation is gonna be too? just Download the app: AppStore: https://did.li/QNFCN | GooglePlay: https://did.li/3fjIw`,
+        title: `Wow! Look where I'm going on vacation next time: ${rendomData?.name?.common}! Want to find out where your next vacation is gonna be too? just Download the app: AppStore: https://did.li/QNFCN | GooglePlay: https://did.li/3fjIw`,
+        message: `Wow! Look where I'm going on vacation next time: ${rendomData?.name?.common}! Want to find out where your next vacation is gonna be too? just Download the app: AppStore: https://did.li/QNFCN | GooglePlay: https://did.li/3fjIw`,
         url: urlString,
         type: 'image/jpeg',
       };
@@ -169,36 +210,6 @@ const MapScreen = () => {
     }
   };
 
-  const fetchPackageJsonContentVersion = async () => {
-    try {
-      const response = await fetch(
-        'https://api.github.com/repos/Navedms/MyNextVacation/contents/package.json',
-      );
-      const data = await response.json();
-
-      if (response.ok && data && data.content) {
-        const decodedContent = decode(data.content);
-        const parsedContent = JSON.parse(decodedContent);
-        return parsedContent.version;
-      } else {
-        console.error('Failed to fetch package.json content');
-      }
-    } catch (error) {
-      console.error('Error while fetching package.json content:', error);
-    }
-  };
-
-  const gotoStore = () => {
-    AppLink.openInStore({
-      appName: 'My Next Vacation',
-      appStoreId: Number('6450987187'),
-      playStoreId: 'com.appn.mynextvacation',
-      appStoreLocale: '',
-    })
-      .then(() => {})
-      .catch(err => {});
-  };
-
   useEffect(() => {
     checkVersionUpdate();
     setAllLocations();
@@ -217,11 +228,12 @@ const MapScreen = () => {
           ref={mapRef}
           style={styles.map}
           initialRegion={initialRegion}
-          onRegionChange={() => setLoading(true)}
+          // onRegionChange={() => setLoading(true)}
           onMapReady={() => setLoading(false)}
-          onRegionChangeComplete={() => setLoading(false)}>
+          // onRegionChangeComplete={() => setLoading(false)}
+        >
           {pressFirstLocation &&
-            allData?.map((item: any) => (
+            selectData?.map((item: any) => (
               <Marker
                 coordinate={{
                   latitude: item.latlng[0],
