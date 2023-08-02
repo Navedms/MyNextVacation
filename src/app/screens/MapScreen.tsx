@@ -134,9 +134,23 @@ const MapScreen = () => {
       if (granted === 'granted') {
         return true;
       } else {
+        setInitialRegion({
+          latitude: 38.0,
+          longitude: -97.0,
+          latitudeDelta: 3,
+          longitudeDelta: 3,
+        });
         return false;
       }
     } catch (err) {
+      console.log(err);
+
+      setInitialRegion({
+        latitude: 38.0,
+        longitude: -97.0,
+        latitudeDelta: 3,
+        longitudeDelta: 3,
+      });
       return false;
     }
   };
@@ -169,9 +183,9 @@ const MapScreen = () => {
             console.log(error.code, error.message);
           },
           {
-            accuracy: {android: 'high', ios: 'best'},
-            enableHighAccuracy: true,
-            timeout: 15000,
+            accuracy: {android: 'balanced', ios: 'reduced'},
+            enableHighAccuracy: false,
+            timeout: 5000,
             maximumAge: 10000,
           },
         );
@@ -297,7 +311,8 @@ const MapScreen = () => {
         <Text style={styles.title}>Where Should You Go On Vacation Next?</Text>
         <View style={styles.containerBtns}>
           <TouchableOpacity
-            style={styles.myLocation}
+            disabled={!myLocation}
+            style={[styles.myLocation, !myLocation && {opacity: 0.5}]}
             onPress={goBackToMyLocation}>
             <Icon
               name="my-location"
