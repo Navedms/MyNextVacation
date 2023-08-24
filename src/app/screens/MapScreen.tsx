@@ -24,8 +24,9 @@ import {ApiResponse} from 'apisauce';
 import Modal from '../components/AppModal';
 import Button from '../components/Button';
 import {fetchPackageJsonContentVersion, gotoStore} from '../api/updateApp';
+import lastLocation from '../utils/lastLocation';
 
-interface InitialRegion {
+export interface InitialRegion {
   latitude: number;
   longitude: number;
   latitudeDelta: number;
@@ -144,13 +145,6 @@ const MapScreen = () => {
       }
     } catch (err) {
       console.log(err);
-
-      setInitialRegion({
-        latitude: 38.0,
-        longitude: -97.0,
-        latitudeDelta: 3,
-        longitudeDelta: 3,
-      });
       return false;
     }
   };
@@ -159,28 +153,35 @@ const MapScreen = () => {
     return number ? number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0;
   };
 
-  const getLocation = () => {
+  const getLocation = async () => {
     const result = requestLocationPermission();
-
+    const myLastLocation = await lastLocation.get('location');
     result.then(res => {
       if (res) {
         Geolocation.getCurrentPosition(
           position => {
-            setInitialRegion({
+            const tempLocation = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
               latitudeDelta: 3,
               longitudeDelta: 3,
-            });
-            setMyLocation({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              latitudeDelta: 3,
-              longitudeDelta: 3,
-            });
+            };
+            setInitialRegion(tempLocation);
+            setMyLocation(tempLocation);
+            lastLocation.store('location', tempLocation);
           },
           error => {
-            console.log(error.code, error.message);
+            if (myLastLocation) {
+              setInitialRegion(myLastLocation);
+              setMyLocation(myLastLocation);
+            } else {
+              setInitialRegion({
+                latitude: 38.0,
+                longitude: -97.0,
+                latitudeDelta: 3,
+                longitudeDelta: 3,
+              });
+            }
           },
           {
             accuracy: {android: 'balanced', ios: 'reduced'},
@@ -242,10 +243,7 @@ const MapScreen = () => {
           ref={mapRef}
           style={styles.map}
           initialRegion={initialRegion}
-          // onRegionChange={() => setLoading(true)}
-          onMapReady={() => setLoading(false)}
-          // onRegionChangeComplete={() => setLoading(false)}
-        >
+          onMapReady={() => setLoading(false)}>
           {pressFirstLocation &&
             selectData?.map((item: any) => (
               <Marker
@@ -300,7 +298,7 @@ const MapScreen = () => {
               style={Platform.OS === 'android' && styles.marker}
               key={`marker-id-myLocation`}>
               <View style={styles.markerTitle}>
-                <Text style={styles.markerRendomText}>{'My location'}</Text>
+                <Text style={styles.markerRendomText}>My location</Text>
               </View>
               <Icon name="map-marker" size={50} iconColor={colors.marker} />
             </Marker>
