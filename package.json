@@ -1,6 +1,6 @@
 {
   "name": "mynextvacation",
-  "version": "1.0.6",
+  "version": "1.0.5",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -35,8 +35,10 @@
     "@react-native/eslint-config": "^0.72.2",
     "@react-native/metro-config": "^0.72.11",
     "@tsconfig/react-native": "^3.0.2",
+    "@types/base-64": "^1.0.0",
     "@types/jest": "^29.5.4",
     "@types/react": "^18.2.21",
+    "@types/react-native-app-link": "^1.0.0",
     "@types/react-native-i18n": "^2.0.0",
     "@types/react-native-vector-icons": "^6.4.14",
     "@types/react-test-renderer": "^18.0.0",
