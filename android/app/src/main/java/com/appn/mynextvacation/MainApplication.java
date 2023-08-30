@@ -1,4 +1,4 @@
-package com.mynextvacation;
+package com.appn.mynextvacation;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

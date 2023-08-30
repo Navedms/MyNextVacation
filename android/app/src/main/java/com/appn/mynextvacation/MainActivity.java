@@ -1,4 +1,4 @@
-package com.mynextvacation;
+package com.appn.mynextvacation;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
